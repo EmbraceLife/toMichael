@@ -1,0 +1,104 @@
+<!doctype html>
+<head>
+  <meta content="text/html;charset=utf-8" http-equiv="Content-Type">
+  <meta content="utf-8" http-equiv="encoding">
+</head>
+<title>toMichael</title>
+<link rel="stylesheet" type="text/css" href="d3.parcoords.css">
+<link rel="stylesheet" type="text/css" href="style.css">
+<script src="d3.js"></script>
+<script src="d3.svg.multibrush.js"></script>
+<script src="d3.parcoords.js"></script>
+<div id="example" class="parcoords" style="width:1360px;height:400px;"></div>
+
+
+<p>
+  <label for="sltBrushMode">Brush mode:</label>
+  <select id="sltBrushMode">
+  </select>
+  <label id="lblPredicate" for="sltPredicate">Predicate:</label>
+  <select id="sltPredicate">
+    <option>AND</option>
+    <option>OR</option>
+  </select>
+  <button id="btnReset">Reset Brushes</button>
+</p>
+
+
+
+
+<script>
+// quantitative color scale
+var blue_to_brown = d3.scale.linear()
+  .domain([5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 66])
+  .range([ "#a6cee3","#1f78b4","#b2df8a","#33a02c",
+            "#fb9a99","#e31a1c","#fdbf6f","#ff7f00",
+            "#cab2d6","#6a3d9a","#ffff99","#b15928"])
+  .interpolate(d3.interpolateLab);
+
+// bind color to mpg feature values
+var color = function(d) { return blue_to_brown(d['ID']); };
+
+    
+// build parcoords
+var parcoords = d3.parcoords()("#example")
+    .color(color)
+    .alpha(0.4);
+
+// load csv file and create the chart
+d3.csv('DitechTrain.csv', function(data) {
+  parcoords
+    .data(data) // bind data
+    .hideAxis(["name"]) // avoid lots info on y axis
+    .composite("darker")
+    .mode("queue")
+    .render() // 
+    .shadows() // provide whole info when see parts
+    .reorderable()
+    .brushMode("1D-axes-multi");  // enable brushing
+    // brushMode: angular(using angle, not as useful as 1d-axes), 1D-axes-multi(more powerful), 2D-strums(very cofusing), 1D-axes(normal)
+});
+
+    
+// add all brushMode options for selecting
+var sltBrushMode = d3.select('#sltBrushMode')
+sltBrushMode.selectAll('option')
+  .data(parcoords.brushModes())
+  .enter()
+    .append('option')
+    .text(function(d) { return d; });
+
+    
+sltBrushMode.on('change', function() {
+  parcoords.brushMode(this.value);
+  switch(this.value) {
+  case 'None':
+    d3.select("#pStrums").style("visibility", "hidden");
+    d3.select("#lblPredicate").style("visibility", "hidden");
+    d3.select("#sltPredicate").style("visibility", "hidden");
+    d3.select("#btnReset").style("visibility", "hidden");
+    break;
+  case '2D-strums':
+    d3.select("#pStrums").style("visibility", "visible");
+    break;
+  default:
+    d3.select("#pStrums").style("visibility", "hidden");
+    d3.select("#lblPredicate").style("visibility", "visible");
+    d3.select("#sltPredicate").style("visibility", "visible");
+    d3.select("#btnReset").style("visibility", "visible");
+    break;
+  }
+});
+
+sltBrushMode.property('value', '1D-axes');
+
+d3.select('#btnReset').on('click', function() {parcoords.brushReset();})
+d3.select('#sltPredicate').on('change', function() {
+  parcoords.brushPredicate(this.value);
+});
+    
+    
+</script>
+
+
+
